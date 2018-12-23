@@ -22,36 +22,103 @@ class MapsDemo extends StatefulWidget {
 class MapsDemoState extends State<MapsDemo> {
 
   GoogleMapController mapController;
+  LatLng workCoordinates = LatLng(17.456348, 78.368109);
+  LatLng xyzCoordinates = LatLng(18.456348, 79.368109);
 
   @override
   void initState() {
     super.initState();
-    checkPermission();
-//    PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.location);
+    askPermission();
 //    bool isOpened = await PermissionHandler().openAppSettings();
 //    bool isShown = await PermissionHandler().shouldShowRequestPermissionRationale(PermissionGroup.contacts);
   }
 
-  checkPermission () async {
-    Map<PermissionGroup, PermissionStatus> permissions = await PermissionHandler().requestPermissions([PermissionGroup.location]);
+  askPermission() async {
+    await PermissionHandler().requestPermissions([PermissionGroup.location]);
+    checkPermission();
   }
 
+  checkPermission() async {
+    PermissionStatus permission = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.location);
+    if (permission == PermissionStatus.unknown ||
+        permission == PermissionStatus.denied) {
+      askPermission();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: GoogleMap(
-        onMapCreated: _onMapCreated,
-        options: GoogleMapOptions(
-          mapType: MapType.hybrid,
-          cameraPosition: CameraPosition(target: LatLng(0, 0)),
-          myLocationEnabled: true,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        SizedBox(
+          height: 600.0,
+          child: GoogleMap(
+            
+            onMapCreated: _onMapCreated,
+            options: GoogleMapOptions(
+              mapType: MapType.hybrid,
+              cameraPosition: CameraPosition(target: LatLng(0, 0)),
+              myLocationEnabled: true,
+              compassEnabled: true,
+            ),
+          ),
         ),
-      ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            FloatingActionButton(
+              onPressed: () {
+                mapController.animateCamera(
+                    CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                        target: workCoordinates,
+                        zoom: 19.0,
+                        tilt: 20.0,
+                      ),
+                    )
+                );
+              },
+              child: Icon(
+                Icons.work,
+                color: Colors.white,
+              ),
+            ),
+            FloatingActionButton(
+              onPressed: () {
+                mapController.animateCamera(
+                    CameraUpdate.newLatLngBounds(LatLngBounds(southwest: workCoordinates, northeast: xyzCoordinates), 20.0),
+                );
+              },
+              child: Icon(
+                Icons.directions,
+                color: Colors.white,
+              ),
+            ),
+            FloatingActionButton(
+              onPressed: () {
+                mapController.addMarker(
+                  MarkerOptions(
+                    draggable: true,
+                    consumeTapEvents:
+                  )
+                );
+              },
+              child: Icon(
+                Icons.pin_drop,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    setState(() { mapController = controller; });
+    setState(() {
+      mapController = controller;
+    });
   }
 }
